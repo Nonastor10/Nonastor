@@ -205,3 +205,17 @@ window.addEventListener("storage", (e) => {
     renderProducts();
   }
 });
+
+// إعادة قراءة المنتجات من التخزين كل مرة الصفحة ترجع تتفتح (مثلاً بعد الرجوع من صفحة
+// الأدمن بزرار الرجوع)، عشان مايفضلش شكل قديم متخزن في ذاكرة المتصفح (bfcache)
+function refreshFromStorage() {
+  products = loadProducts();
+  renderProducts();
+  renderCart();
+}
+window.addEventListener("pageshow", (e) => {
+  if (e.persisted) refreshFromStorage();
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") refreshFromStorage();
+});
