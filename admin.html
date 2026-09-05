@@ -22,44 +22,57 @@
   </div>
 
   <div class="lm-admin" id="adminPanel" style="display:none;">
-    <h2>إدارة المنتجات</h2>
-    <p class="sub">أضيفي منتج جديد أو عدّلي على المنتجات الحالية، بما في ذلك صورة المنتج</p>
+    <div class="lm-admin-nav">
+      <button class="lm-admin-nav-btn active" id="tabProducts">المنتجات</button>
+      <button class="lm-admin-nav-btn" id="tabOrders">قائمة الطلبات</button>
+    </div>
 
-    <form class="lm-form" id="productForm">
-      <div class="lm-field">
-        <label>اسم المنتج</label>
-        <input type="text" id="fName" placeholder="مثال: سوار همسة ذهبية">
-      </div>
-      <div class="lm-field">
-        <label>السعر (ج.م)</label>
-        <input type="number" min="0" id="fPrice" placeholder="مثال: 350">
-      </div>
-      <div class="lm-field">
-        <label>الفئة</label>
-        <select id="fCategory"></select>
-      </div>
-      <div class="lm-field">
-        <label>وصف مختصر (اختياري)</label>
-        <input type="text" id="fDesc" placeholder="مثال: فضة مطلية بالذهب">
-      </div>
-      <div class="lm-field full">
-        <label>صورة المنتج (اختياري)</label>
-        <input type="file" id="fImage" accept="image/*">
-        <img id="fImagePreview" class="lm-image-preview" style="display:none; margin-top:8px;">
-      </div>
-      <div class="lm-form-actions">
-        <button type="submit" class="lm-submit-btn" id="submitBtn">＋ إضافة المنتج</button>
-        <button type="button" class="lm-cancel-btn" id="cancelBtn" style="display:none;">إلغاء</button>
-        <span class="lm-admin-msg" id="adminMsg"></span>
-      </div>
-    </form>
+    <div id="productsView">
+      <h2>إدارة المنتجات</h2>
+      <p class="sub">أضيفي منتج جديد أو عدّلي على المنتجات الحالية، بما في ذلك صورة المنتج</p>
 
-    <table class="lm-table">
-      <thead>
-        <tr><th>الصورة</th><th>المنتج</th><th>الفئة</th><th>السعر</th><th></th></tr>
-      </thead>
-      <tbody id="productTableBody"></tbody>
-    </table>
+      <form class="lm-form" id="productForm">
+        <div class="lm-field">
+          <label>اسم المنتج</label>
+          <input type="text" id="fName" placeholder="مثال: سوار همسة ذهبية">
+        </div>
+        <div class="lm-field">
+          <label>السعر (ج.م)</label>
+          <input type="number" min="0" id="fPrice" placeholder="مثال: 350">
+        </div>
+        <div class="lm-field">
+          <label>الفئة</label>
+          <select id="fCategory"></select>
+        </div>
+        <div class="lm-field">
+          <label>وصف مختصر (اختياري)</label>
+          <input type="text" id="fDesc" placeholder="مثال: فضة مطلية بالذهب">
+        </div>
+        <div class="lm-field full">
+          <label>صورة المنتج (اختياري)</label>
+          <input type="file" id="fImage" accept="image/*">
+          <img id="fImagePreview" class="lm-image-preview" style="display:none; margin-top:8px;">
+        </div>
+        <div class="lm-form-actions">
+          <button type="submit" class="lm-submit-btn" id="submitBtn">＋ إضافة المنتج</button>
+          <button type="button" class="lm-cancel-btn" id="cancelBtn" style="display:none;">إلغاء</button>
+          <span class="lm-admin-msg" id="adminMsg"></span>
+        </div>
+      </form>
+
+      <table class="lm-table">
+        <thead>
+          <tr><th>الصورة</th><th>المنتج</th><th>الفئة</th><th>السعر</th><th></th></tr>
+        </thead>
+        <tbody id="productTableBody"></tbody>
+      </table>
+    </div>
+
+    <div id="ordersView" style="display:none;">
+      <h2>قائمة الطلبات</h2>
+      <p class="sub">كل الطلبات اللي اتعملت من المتجر، بترتيب الأحدث أولًا</p>
+      <div id="ordersList"></div>
+    </div>
   </div>
 
   <script src="data.js"></script>
