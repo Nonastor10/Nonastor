@@ -43,6 +43,11 @@
     <div class="lm-drawer-body" id="cartBody"></div>
     <div class="lm-drawer-foot" id="cartFoot" style="display:none;">
       <div class="lm-total-row"><span>الإجمالي</span><span id="cartTotal">0 ج.م</span></div>
+      <div class="lm-checkout-fields">
+        <input type="text" id="custName" placeholder="اسمك بالكامل" class="lm-checkout-input">
+        <input type="tel" id="custPhone" placeholder="رقم موبايلك" class="lm-checkout-input">
+        <p class="lm-field-err" id="checkoutErr"></p>
+      </div>
       <button class="lm-checkout-btn" id="checkoutBtn">إتمام الطلب</button>
       <p class="lm-note">هذا متجر تجريبي - لا يتم تفعيل دفع حقيقي</p>
     </div>
