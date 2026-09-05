@@ -130,7 +130,15 @@ function renderCart() {
           <p class="lm-note">هيتفتح واتساب برسالة جاهزة - ماينفعش نرفق الصورة تلقائيًا، فمن فضلك أرفقي السكرين شوت بنفسك جوه المحادثة</p>
         </div>`;
     } else {
-      cartBody.innerHTML = `<p class="lm-empty">السلة فارغة حاليًا</p>`;
+      cartBody.innerHTML = `
+        <div class="lm-empty">
+          <svg viewBox="0 0 48 48" fill="none" stroke="#8C8275" stroke-width="1.6" style="margin:0 auto;display:block;">
+            <path d="M12 16 L14 40 C14 42 16 44 18 44 L30 44 C32 44 34 42 34 40 L36 16" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 16 L39 16" stroke-linecap="round"/>
+            <path d="M18 16 C18 11 20 8 24 8 C28 8 30 11 30 16" stroke-linecap="round"/>
+          </svg>
+          السلة فارغة حاليًا
+        </div>`;
     }
     cartFoot.style.display = "none";
     return;
@@ -138,8 +146,13 @@ function renderCart() {
 
   cartBody.innerHTML = entries
     .map(
-      (e) => `
+      (e) => {
+        const thumb = e.product.image
+          ? `<img src="${e.product.image}" alt="${e.product.name}">`
+          : CATEGORY_ICONS[e.product.category] || "";
+        return `
     <div class="lm-cart-row">
+      <div class="lm-cart-thumb">${thumb}</div>
       <div class="lm-cart-row-info">
         <div class="name">${e.product.name}</div>
         <div class="price">${e.product.price} ج.م</div>
@@ -150,7 +163,8 @@ function renderCart() {
         <button data-act="inc" data-id="${e.id}">+</button>
       </div>
       <button class="lm-icon-btn danger" data-act="remove" data-id="${e.id}">🗑</button>
-    </div>`
+    </div>`;
+      }
     )
     .join("");
 
@@ -183,3 +197,11 @@ function submitOrder() {
 renderCategoryPills();
 renderProducts();
 renderCart();
+
+// تحديث المنتجات فورًا لو اتغيرت من صفحة الأدمن (مفتوحة في تاب تاني بنفس المتصفح)
+window.addEventListener("storage", (e) => {
+  if (e.key === NONA_PRODUCTS_KEY) {
+    products = loadProducts();
+    renderProducts();
+  }
+});
