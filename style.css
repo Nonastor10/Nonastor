@@ -146,6 +146,13 @@ body {
 .lm-total-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
 .lm-total-row span:first-child { font-size: 13px; color: var(--ink-soft); font-weight: 700; }
 .lm-total-row span:last-child { font-family: 'El Messiri', serif; font-weight: 700; font-size: 20px; color: var(--gold-deep); }
+.lm-checkout-fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.lm-checkout-input {
+  width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 11px 14px; font-size: 14px;
+  font-family: 'Tajawal', sans-serif; background: #fff; color: var(--ink);
+}
+.lm-checkout-input:focus { outline: none; border-color: var(--gold); }
+.lm-field-err { color: #A5432B; font-size: 12.5px; margin: 0; min-height: 16px; }
 .lm-checkout-btn {
   width: 100%; background: var(--ink); color: #fff; border: none; padding: 15px; border-radius: 6px;
   font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 14.5px;
@@ -178,7 +185,10 @@ body {
 /* Admin */
 .lm-admin { max-width: 900px; margin: 0 auto; padding: 40px 32px 80px; }
 .lm-admin h2 { font-family: 'El Messiri', serif; font-size: 24px; margin-bottom: 4px; }
-.lm-admin > p.sub { color: var(--ink-soft); font-size: 14px; margin-bottom: 28px; }
+.lm-admin > p.sub, .lm-admin div > p.sub { color: var(--ink-soft); font-size: 14px; margin-bottom: 28px; }
+.lm-admin-nav { display: flex; gap: 6px; background: var(--panel); border: 1px solid var(--line); padding: 4px; border-radius: 999px; width: fit-content; margin-bottom: 32px; }
+.lm-admin-nav-btn { border: none; background: transparent; padding: 9px 20px; border-radius: 999px; font-family: 'Tajawal', sans-serif; font-size: 13.5px; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
+.lm-admin-nav-btn.active { background: var(--ink); color: #fff; }
 .lm-form {
   background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 22px;
   display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 36px;
@@ -201,6 +211,25 @@ body {
 .lm-table img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
 .lm-table .cat-tag { font-size: 12px; color: var(--rose); font-weight: 700; }
 .lm-row-actions { display: flex; gap: 8px; }
+
+/* Orders list */
+.lm-order-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 20px; margin-bottom: 18px; }
+.lm-order-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px dashed var(--line); }
+.lm-order-num { font-family: 'El Messiri', serif; font-size: 18px; font-weight: 700; }
+.lm-order-date { font-size: 12px; color: var(--ink-soft); }
+.lm-order-customer { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13.5px; margin-bottom: 14px; }
+.lm-order-customer b { color: var(--ink-soft); font-weight: 700; margin-left: 4px; }
+.lm-order-customer a { color: var(--gold-deep); text-decoration: none; font-weight: 700; }
+.lm-order-items { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.lm-order-item { display: flex; align-items: center; gap: 12px; }
+.lm-order-thumb { width: 44px; height: 44px; border-radius: 6px; overflow: hidden; flex-shrink: 0; background: linear-gradient(135deg, #F0E3D2, #FBF7F1); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
+.lm-order-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.lm-order-thumb svg { width: 22px; height: 22px; }
+.lm-order-item-name { flex: 1; font-size: 13.5px; }
+.lm-order-item-qty { font-size: 12.5px; color: var(--ink-soft); }
+.lm-order-item-price { font-size: 13.5px; font-weight: 700; color: var(--gold-deep); }
+.lm-order-totals { display: flex; justify-content: flex-end; gap: 24px; font-size: 13.5px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.lm-order-totals b { color: var(--gold-deep); }
 
 /* Admin login gate */
 .lm-gate { max-width: 380px; margin: 90px auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 32px; text-align: center; }
