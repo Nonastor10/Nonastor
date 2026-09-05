@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة التحكم | Nona Store</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="lm-header">
+    <div class="lm-brand">Nona <span>Store</span></div>
+    <span style="font-size:13px; color:var(--ink-soft);">لوحة التحكم</span>
+  </header>
+
+  <div id="gate" class="lm-gate">
+    <h2 class="lm-display">دخول لوحة التحكم</h2>
+    <p>الصفحة دي مخصصة لصاحبة المتجر فقط</p>
+    <input type="password" id="gatePassword" placeholder="كلمة المرور">
+    <button id="gateBtn">دخول</button>
+    <div class="err" id="gateErr"></div>
+  </div>
+
+  <div class="lm-admin" id="adminPanel" style="display:none;">
+    <h2>إدارة المنتجات</h2>
+    <p class="sub">أضيفي منتج جديد أو عدّلي على المنتجات الحالية، بما في ذلك صورة المنتج</p>
+
+    <form class="lm-form" id="productForm">
+      <div class="lm-field">
+        <label>اسم المنتج</label>
+        <input type="text" id="fName" placeholder="مثال: سوار همسة ذهبية">
+      </div>
+      <div class="lm-field">
+        <label>السعر (ج.م)</label>
+        <input type="number" min="0" id="fPrice" placeholder="مثال: 350">
+      </div>
+      <div class="lm-field">
+        <label>الفئة</label>
+        <select id="fCategory"></select>
+      </div>
+      <div class="lm-field">
+        <label>وصف مختصر (اختياري)</label>
+        <input type="text" id="fDesc" placeholder="مثال: فضة مطلية بالذهب">
+      </div>
+      <div class="lm-field full">
+        <label>صورة المنتج (اختياري)</label>
+        <input type="file" id="fImage" accept="image/*">
+        <img id="fImagePreview" class="lm-image-preview" style="display:none; margin-top:8px;">
+      </div>
+      <div class="lm-form-actions">
+        <button type="submit" class="lm-submit-btn" id="submitBtn">＋ إضافة المنتج</button>
+        <button type="button" class="lm-cancel-btn" id="cancelBtn" style="display:none;">إلغاء</button>
+        <span class="lm-admin-msg" id="adminMsg"></span>
+      </div>
+    </form>
+
+    <table class="lm-table">
+      <thead>
+        <tr><th>الصورة</th><th>المنتج</th><th>الفئة</th><th>السعر</th><th></th></tr>
+      </thead>
+      <tbody id="productTableBody"></tbody>
+    </table>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
