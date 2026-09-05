@@ -15,6 +15,9 @@ const cartBody = document.getElementById("cartBody");
 const cartFoot = document.getElementById("cartFoot");
 const cartTotalEl = document.getElementById("cartTotal");
 const checkoutBtn = document.getElementById("checkoutBtn");
+const custName = document.getElementById("custName");
+const custPhone = document.getElementById("custPhone");
+const checkoutErr = document.getElementById("checkoutErr");
 
 document.getElementById("browseBtn").addEventListener("click", () => {
   document.getElementById("catalog").scrollIntoView({ behavior: "smooth" });
@@ -181,16 +184,43 @@ function renderCart() {
 }
 
 function submitOrder() {
+  const name = custName.value.trim();
+  const phone = custPhone.value.trim();
+  if (!name || !phone) {
+    checkoutErr.textContent = "من فضلك اكتبي الاسم ورقم الموبايل قبل إتمام الطلب";
+    return;
+  }
+  checkoutErr.textContent = "";
+
   const entries = Object.entries(cart)
     .map(([id, qty]) => ({ qty, product: products.find((p) => p.id === Number(id)) }))
     .filter((e) => e.product);
   const total = entries.reduce((s, e) => s + e.qty * e.product.price, 0);
   const deposit = Math.ceil(total / 2);
+  const orderNumber = nextOrderNumber();
 
-  lastOrder = { number: nextOrderNumber(), total, deposit };
+  addOrder({
+    number: orderNumber,
+    customerName: name,
+    customerPhone: phone,
+    items: entries.map((e) => ({
+      id: e.product.id,
+      name: e.product.name,
+      price: e.product.price,
+      qty: e.qty,
+      image: e.product.image || null,
+    })),
+    total,
+    deposit,
+    createdAt: new Date().toISOString(),
+  });
+
+  lastOrder = { number: orderNumber, total, deposit };
   cart = {};
   saveCart(cart);
   orderDone = true;
+  custName.value = "";
+  custPhone.value = "";
   renderCart();
 }
 
