@@ -4,6 +4,7 @@
 const NONA_PRODUCTS_KEY = "nona_products";
 const NONA_CART_KEY = "nona_cart";
 const NONA_ORDER_SEQ_KEY = "nona_order_seq";
+const NONA_ORDERS_KEY = "nona_orders";
 
 // رقم محفظة فودافون كاش لاستلام العربون، ونفس الرقم على واتساب لتأكيد الطلب
 const STORE_PHONE_DISPLAY = "01154257411";
@@ -78,4 +79,23 @@ function nextOrderNumber() {
   const next = current + 1;
   localStorage.setItem(NONA_ORDER_SEQ_KEY, String(next));
   return next;
+}
+
+function loadOrders() {
+  try {
+    const raw = localStorage.getItem(NONA_ORDERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveOrders(orders) {
+  localStorage.setItem(NONA_ORDERS_KEY, JSON.stringify(orders));
+}
+
+function addOrder(order) {
+  const orders = loadOrders();
+  orders.unshift(order); // الأحدث فوق
+  saveOrders(orders);
 }
