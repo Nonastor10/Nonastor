@@ -154,3 +154,73 @@ function renderTable() {
 }
 
 renderTable();
+
+// ---- تبديل التابات (المنتجات / الطلبات) ----
+const tabProducts = document.getElementById("tabProducts");
+const tabOrders = document.getElementById("tabOrders");
+const productsView = document.getElementById("productsView");
+const ordersView = document.getElementById("ordersView");
+const ordersList = document.getElementById("ordersList");
+
+tabProducts.addEventListener("click", () => {
+  tabProducts.classList.add("active");
+  tabOrders.classList.remove("active");
+  productsView.style.display = "block";
+  ordersView.style.display = "none";
+});
+
+tabOrders.addEventListener("click", () => {
+  tabOrders.classList.add("active");
+  tabProducts.classList.remove("active");
+  productsView.style.display = "none";
+  ordersView.style.display = "block";
+  renderOrders();
+});
+
+function formatOrderDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString("ar-EG", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function renderOrders() {
+  const orders = loadOrders();
+  if (orders.length === 0) {
+    ordersList.innerHTML = `<p style="color:var(--ink-soft); text-align:center; padding:40px 0;">لسه مفيش أي طلبات</p>`;
+    return;
+  }
+  ordersList.innerHTML = orders
+    .map((o) => {
+      const itemsHtml = o.items
+        .map((it) => {
+          const owner = products.find((p) => p.id === it.id);
+          const thumb = it.image
+            ? `<img src="${it.image}" alt="${it.name}">`
+            : CATEGORY_ICONS[owner?.category] || "";
+          return `
+          <div class="lm-order-item">
+            <div class="lm-order-thumb">${thumb}</div>
+            <span class="lm-order-item-name">${it.name}</span>
+            <span class="lm-order-item-qty">×${it.qty}</span>
+            <span class="lm-order-item-price">${it.price * it.qty} ج.م</span>
+          </div>`;
+        })
+        .join("");
+      return `
+      <div class="lm-order-card">
+        <div class="lm-order-head">
+          <span class="lm-order-num">طلب #${o.number}</span>
+          <span class="lm-order-date">${formatOrderDate(o.createdAt)}</span>
+        </div>
+        <div class="lm-order-customer">
+          <span><b>الاسم:</b> ${o.customerName}</span>
+          <span><b>الهاتف:</b> <a href="tel:${o.customerPhone}">${o.customerPhone}</a></span>
+        </div>
+        <div class="lm-order-items">${itemsHtml}</div>
+        <div class="lm-order-totals">
+          <span>الإجمالي: <b>${o.total} ج.م</b></span>
+          <span>العربون المطلوب: <b>${o.deposit} ج.م</b></span>
+        </div>
+      </div>`;
+    })
+    .join("");
+}
