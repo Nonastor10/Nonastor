@@ -95,6 +95,10 @@ async function addOrder(order) {
   await ordersCol.add({ ...order, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
 }
 
+async function deleteOrderDoc(id) {
+  await ordersCol.doc(id).delete();
+}
+
 function subscribeOrders(callback) {
   return ordersCol.orderBy("createdAt", "desc").onSnapshot((snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
