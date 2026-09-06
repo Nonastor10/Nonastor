@@ -44,9 +44,27 @@ fImage.addEventListener("change", () => {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    currentImage = reader.result;
-    fImagePreview.src = currentImage;
-    fImagePreview.style.display = "block";
+    const img = new Image();
+    img.onload = () => {
+      // تصغير الصورة عشان تدخل في حجم Firestore المسموح (أقل من 1 ميجا)
+      const MAX_DIM = 700;
+      let { width, height } = img;
+      if (width > height && width > MAX_DIM) {
+        height = Math.round(height * (MAX_DIM / width));
+        width = MAX_DIM;
+      } else if (height >= width && height > MAX_DIM) {
+        width = Math.round(width * (MAX_DIM / height));
+        height = MAX_DIM;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      currentImage = canvas.toDataURL("image/jpeg", 0.72);
+      fImagePreview.src = currentImage;
+      fImagePreview.style.display = "block";
+    };
+    img.src = reader.result;
   };
   reader.readAsDataURL(file);
 });
