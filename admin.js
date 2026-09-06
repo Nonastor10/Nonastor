@@ -1,8 +1,8 @@
-// ⚠️ كلمة مرور بسيطة من جهة العميل فقط - مناسبة كحماية مبدئية لحد ما تعملي
-// استضافة حقيقية بباك إند. غيّريها هنا لأي كلمة تحبيها قبل الرفع على GitHub.
+// ⚠️ كلمة مرور بسيطة من جهة العميل فقط - مناسبة كحماية مبدئية.
+// غيّريها هنا لأي كلمة تحبيها قبل الرفع على GitHub.
 const ADMIN_PASSWORD = "nona2026";
 
-let products = loadProducts();
+let products = [];
 let editingId = null;
 let currentImage = null;
 
@@ -24,7 +24,7 @@ function tryLogin() {
   }
 }
 
-// ---- Admin panel (يعمل بس بعد الدخول) ----
+// ---- Admin panel ----
 const fName = document.getElementById("fName");
 const fPrice = document.getElementById("fPrice");
 const fCategory = document.getElementById("fCategory");
@@ -51,7 +51,7 @@ fImage.addEventListener("change", () => {
   reader.readAsDataURL(file);
 });
 
-productForm.addEventListener("submit", (e) => {
+productForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = fName.value.trim();
   const price = parseFloat(fPrice.value);
@@ -59,22 +59,23 @@ productForm.addEventListener("submit", (e) => {
     adminMsg.textContent = "من فضلك اكتبي اسم المنتج وسعر صحيح";
     return;
   }
-  if (editingId) {
-    products = products.map((p) =>
-      p.id === editingId
-        ? { ...p, name, price, category: fCategory.value, desc: fDesc.value, image: currentImage }
-        : p
-    );
-    adminMsg.textContent = "تم حفظ التعديلات";
-  } else {
-    const nextId = products.length ? Math.max(...products.map((p) => p.id)) + 1 : 1;
-    products.push({ id: nextId, name, price, category: fCategory.value, desc: fDesc.value, image: currentImage });
-    adminMsg.textContent = "تمت إضافة المنتج";
+  submitBtn.disabled = true;
+  const payload = { name, price, category: fCategory.value, desc: fDesc.value, image: currentImage };
+  try {
+    if (editingId) {
+      await updateProduct(editingId, payload);
+      adminMsg.textContent = "تم حفظ التعديلات";
+    } else {
+      await addProduct(payload);
+      adminMsg.textContent = "تمت إضافة المنتج";
+    }
+    resetForm();
+  } catch (err) {
+    adminMsg.textContent = "حصل خطأ - جربي تاني (لو الصورة كبيرة قوي جربي صورة أصغر)";
+  } finally {
+    submitBtn.disabled = false;
+    setTimeout(() => (adminMsg.textContent = ""), 3000);
   }
-  saveProducts(products);
-  resetForm();
-  renderTable();
-  setTimeout(() => (adminMsg.textContent = ""), 2500);
 });
 
 cancelBtn.addEventListener("click", resetForm);
@@ -112,11 +113,9 @@ function editProduct(id) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-function deleteProduct(id) {
-  products = products.filter((p) => p.id !== id);
-  saveProducts(products);
+async function deleteProduct(id) {
+  await deleteProductDoc(id);
   if (editingId === id) resetForm();
-  renderTable();
 }
 
 function renderTable() {
@@ -147,13 +146,16 @@ function renderTable() {
     .join("");
 
   tableBody.querySelectorAll("button").forEach((btn) => {
-    const id = Number(btn.dataset.id);
+    const id = btn.dataset.id;
     if (btn.dataset.act === "edit") btn.addEventListener("click", () => editProduct(id));
     if (btn.dataset.act === "delete") btn.addEventListener("click", () => deleteProduct(id));
   });
 }
 
-renderTable();
+subscribeProducts((list) => {
+  products = list;
+  renderTable();
+});
 
 // ---- تبديل التابات (المنتجات / الطلبات) ----
 const tabProducts = document.getElementById("tabProducts");
@@ -161,6 +163,12 @@ const tabOrders = document.getElementById("tabOrders");
 const productsView = document.getElementById("productsView");
 const ordersView = document.getElementById("ordersView");
 const ordersList = document.getElementById("ordersList");
+
+let orders = [];
+subscribeOrders((list) => {
+  orders = list;
+  if (ordersView.style.display !== "none") renderOrders();
+});
 
 tabProducts.addEventListener("click", () => {
   tabProducts.classList.add("active");
@@ -177,13 +185,12 @@ tabOrders.addEventListener("click", () => {
   renderOrders();
 });
 
-function formatOrderDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleString("ar-EG", { dateStyle: "medium", timeStyle: "short" });
+function formatOrderDate(ts) {
+  if (!ts || !ts.toDate) return "";
+  return ts.toDate().toLocaleString("ar-EG", { dateStyle: "medium", timeStyle: "short" });
 }
 
 function renderOrders() {
-  const orders = loadOrders();
   if (orders.length === 0) {
     ordersList.innerHTML = `<p style="color:var(--ink-soft); text-align:center; padding:40px 0;">لسه مفيش أي طلبات</p>`;
     return;
