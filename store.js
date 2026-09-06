@@ -123,7 +123,7 @@ function renderCart() {
           <p class="lm-confirm-title">تم تسجيل طلبك رقم #${lastOrder.number} ✅</p>
           <p class="lm-confirm-line">إجمالي الطلب: <strong>${lastOrder.total} ج.م</strong></p>
           <p class="lm-confirm-line">المطلوب تحويله كعربون (نص المبلغ): <strong>${lastOrder.deposit} ج.م</strong></p>
-          <p class="lm-confirm-step">1) حوّلي مبلغ العربون على محفظة فودافون كاش رقم:</p>
+          <p class="lm-confirm-step">1) حوّل مبلغ العربون على محفظة كاش رقم:</p>
           <p class="lm-phone">${STORE_PHONE_DISPLAY}</p>
           <p class="lm-confirm-step">2) اعملي سكرين شوت لإيصال التحويل</p>
           <p class="lm-confirm-step">3) ابعتي السكرين شوت على واتساب على نفس الرقم لتأكيد الطلب</p>
