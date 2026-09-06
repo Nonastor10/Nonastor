@@ -1,4 +1,4 @@
-let products = loadProducts();
+let products = [];
 let cart = loadCart(); // { [productId]: qty }
 let activeCategory = "all";
 let orderDone = false;
@@ -61,9 +61,7 @@ function renderProducts() {
   grid.innerHTML = list
     .map((p) => {
       const cat = catInfo(p.category);
-      const media = p.image
-        ? `<img src="${p.image}" alt="${p.name}">`
-        : CATEGORY_ICONS[p.category] || "";
+      const media = p.image ? `<img src="${p.image}" alt="${p.name}">` : CATEGORY_ICONS[p.category] || "";
       return `
       <div class="lm-card">
         <div class="lm-card-media">${media}</div>
@@ -80,7 +78,7 @@ function renderProducts() {
     })
     .join("");
   grid.querySelectorAll(".lm-add-btn").forEach((btn) => {
-    btn.addEventListener("click", () => addToCart(Number(btn.dataset.id)));
+    btn.addEventListener("click", () => addToCart(btn.dataset.id));
   });
 }
 
@@ -107,7 +105,7 @@ function removeFromCart(id) {
 
 function renderCart() {
   const entries = Object.entries(cart)
-    .map(([id, qty]) => ({ id: Number(id), qty, product: products.find((p) => p.id === Number(id)) }))
+    .map(([id, qty]) => ({ id, qty, product: products.find((p) => p.id === id) }))
     .filter((e) => e.product);
 
   const count = entries.reduce((s, e) => s + e.qty, 0);
@@ -148,12 +146,11 @@ function renderCart() {
   }
 
   cartBody.innerHTML = entries
-    .map(
-      (e) => {
-        const thumb = e.product.image
-          ? `<img src="${e.product.image}" alt="${e.product.name}">`
-          : CATEGORY_ICONS[e.product.category] || "";
-        return `
+    .map((e) => {
+      const thumb = e.product.image
+        ? `<img src="${e.product.image}" alt="${e.product.name}">`
+        : CATEGORY_ICONS[e.product.category] || "";
+      return `
     <div class="lm-cart-row">
       <div class="lm-cart-thumb">${thumb}</div>
       <div class="lm-cart-row-info">
@@ -167,12 +164,11 @@ function renderCart() {
       </div>
       <button class="lm-icon-btn danger" data-act="remove" data-id="${e.id}">🗑</button>
     </div>`;
-      }
-    )
+    })
     .join("");
 
   cartBody.querySelectorAll("button").forEach((btn) => {
-    const id = Number(btn.dataset.id);
+    const id = btn.dataset.id;
     if (btn.dataset.act === "inc") btn.addEventListener("click", () => changeQty(id, 1));
     if (btn.dataset.act === "dec") btn.addEventListener("click", () => changeQty(id, -1));
     if (btn.dataset.act === "remove") btn.addEventListener("click", () => removeFromCart(id));
@@ -183,7 +179,7 @@ function renderCart() {
   cartFoot.style.display = "block";
 }
 
-function submitOrder() {
+async function submitOrder() {
   const name = custName.value.trim();
   const phone = custPhone.value.trim();
   if (!name || !phone) {
@@ -191,61 +187,53 @@ function submitOrder() {
     return;
   }
   checkoutErr.textContent = "";
+  checkoutBtn.disabled = true;
+  checkoutBtn.textContent = "جارٍ إرسال الطلب...";
 
   const entries = Object.entries(cart)
-    .map(([id, qty]) => ({ qty, product: products.find((p) => p.id === Number(id)) }))
+    .map(([id, qty]) => ({ qty, product: products.find((p) => p.id === id) }))
     .filter((e) => e.product);
   const total = entries.reduce((s, e) => s + e.qty * e.product.price, 0);
   const deposit = Math.ceil(total / 2);
-  const orderNumber = nextOrderNumber();
 
-  addOrder({
-    number: orderNumber,
-    customerName: name,
-    customerPhone: phone,
-    items: entries.map((e) => ({
-      id: e.product.id,
-      name: e.product.name,
-      price: e.product.price,
-      qty: e.qty,
-      image: e.product.image || null,
-    })),
-    total,
-    deposit,
-    createdAt: new Date().toISOString(),
-  });
+  try {
+    const orderNumber = await nextOrderNumber();
+    await addOrder({
+      number: orderNumber,
+      customerName: name,
+      customerPhone: phone,
+      items: entries.map((e) => ({
+        id: e.product.id,
+        name: e.product.name,
+        price: e.product.price,
+        qty: e.qty,
+        image: e.product.image || null,
+      })),
+      total,
+      deposit,
+    });
 
-  lastOrder = { number: orderNumber, total, deposit };
-  cart = {};
-  saveCart(cart);
-  orderDone = true;
-  custName.value = "";
-  custPhone.value = "";
-  renderCart();
+    lastOrder = { number: orderNumber, total, deposit };
+    cart = {};
+    saveCart(cart);
+    orderDone = true;
+    custName.value = "";
+    custPhone.value = "";
+    renderCart();
+  } catch (err) {
+    checkoutErr.textContent = "حصل خطأ أثناء إرسال الطلب، حاولي تاني";
+  } finally {
+    checkoutBtn.disabled = false;
+    checkoutBtn.textContent = "إتمام الطلب";
+  }
 }
 
 renderCategoryPills();
-renderProducts();
 renderCart();
 
-// تحديث المنتجات فورًا لو اتغيرت من صفحة الأدمن (مفتوحة في تاب تاني بنفس المتصفح)
-window.addEventListener("storage", (e) => {
-  if (e.key === NONA_PRODUCTS_KEY) {
-    products = loadProducts();
-    renderProducts();
-  }
-});
-
-// إعادة قراءة المنتجات من التخزين كل مرة الصفحة ترجع تتفتح (مثلاً بعد الرجوع من صفحة
-// الأدمن بزرار الرجوع)، عشان مايفضلش شكل قديم متخزن في ذاكرة المتصفح (bfcache)
-function refreshFromStorage() {
-  products = loadProducts();
+// اشتراك لحظي في المنتجات - أي تغيير من صفحة الأدمن (من أي جهاز) بيظهر هنا فورًا
+subscribeProducts((list) => {
+  products = list;
   renderProducts();
   renderCart();
-}
-window.addEventListener("pageshow", (e) => {
-  if (e.persisted) refreshFromStorage();
-});
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") refreshFromStorage();
 });
