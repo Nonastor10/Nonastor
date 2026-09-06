@@ -89,7 +89,8 @@ productForm.addEventListener("submit", async (e) => {
     }
     resetForm();
   } catch (err) {
-    adminMsg.textContent = "حصل خطأ - جربي تاني (لو الصورة كبيرة قوي جربي صورة أصغر)";
+    console.error("Firestore error:", err);
+    adminMsg.textContent = "خطأ: " + (err.code || err.message || "غير معروف");
   } finally {
     submitBtn.disabled = false;
     setTimeout(() => (adminMsg.textContent = ""), 3000);
@@ -181,11 +182,19 @@ const tabOrders = document.getElementById("tabOrders");
 const productsView = document.getElementById("productsView");
 const ordersView = document.getElementById("ordersView");
 const ordersList = document.getElementById("ordersList");
+const orderSearch = document.getElementById("orderSearch");
 
 let orders = [];
+let orderSearchTerm = "";
+
 subscribeOrders((list) => {
   orders = list;
   if (ordersView.style.display !== "none") renderOrders();
+});
+
+orderSearch.addEventListener("input", () => {
+  orderSearchTerm = orderSearch.value.trim();
+  renderOrders();
 });
 
 tabProducts.addEventListener("click", () => {
@@ -208,12 +217,29 @@ function formatOrderDate(ts) {
   return ts.toDate().toLocaleString("ar-EG", { dateStyle: "medium", timeStyle: "short" });
 }
 
+function toWhatsAppNumber(phone) {
+  let digits = (phone || "").replace(/\D/g, "");
+  if (digits.startsWith("0")) digits = "20" + digits.slice(1);
+  else if (!digits.startsWith("20")) digits = "20" + digits;
+  return digits;
+}
+
+async function deleteOrder(id) {
+  await deleteOrderDoc(id);
+}
+
 function renderOrders() {
-  if (orders.length === 0) {
-    ordersList.innerHTML = `<p style="color:var(--ink-soft); text-align:center; padding:40px 0;">لسه مفيش أي طلبات</p>`;
+  const filtered = orderSearchTerm
+    ? orders.filter((o) => String(o.number).includes(orderSearchTerm))
+    : orders;
+
+  if (filtered.length === 0) {
+    ordersList.innerHTML = `<p style="color:var(--ink-soft); text-align:center; padding:40px 0;">${
+      orderSearchTerm ? "مفيش طلب برقم زي ده" : "لسه مفيش أي طلبات"
+    }</p>`;
     return;
   }
-  ordersList.innerHTML = orders
+  ordersList.innerHTML = filtered
     .map((o) => {
       const itemsHtml = o.items
         .map((it) => {
@@ -230,15 +256,23 @@ function renderOrders() {
           </div>`;
         })
         .join("");
+      const waNumber = toWhatsAppNumber(o.customerPhone);
       return `
       <div class="lm-order-card">
         <div class="lm-order-head">
           <span class="lm-order-num">طلب #${o.number}</span>
-          <span class="lm-order-date">${formatOrderDate(o.createdAt)}</span>
+          <div class="lm-order-head-left">
+            <span class="lm-order-date">${formatOrderDate(o.createdAt)}</span>
+            <button class="lm-icon-btn danger" data-act="delete-order" data-id="${o.id}">🗑</button>
+          </div>
         </div>
         <div class="lm-order-customer">
           <span><b>الاسم:</b> ${o.customerName}</span>
-          <span><b>الهاتف:</b> <a href="tel:${o.customerPhone}">${o.customerPhone}</a></span>
+          <span>
+            <b>الهاتف:</b>
+            <a href="https://wa.me/${waNumber}" target="_blank" rel="noopener" class="lm-order-wa" title="تواصل على واتساب">💬</a>
+            <a href="tel:${o.customerPhone}">${o.customerPhone}</a>
+          </span>
         </div>
         <div class="lm-order-items">${itemsHtml}</div>
         <div class="lm-order-totals">
@@ -248,4 +282,8 @@ function renderOrders() {
       </div>`;
     })
     .join("");
+
+  ordersList.querySelectorAll('[data-act="delete-order"]').forEach((btn) => {
+    btn.addEventListener("click", () => deleteOrder(btn.dataset.id));
+  });
 }
