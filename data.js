@@ -1,10 +1,8 @@
 // بيانات مشتركة بين صفحة المتجر وصفحة الأدمن
-// كل حاجة متخزنة في localStorage عشان تفضل موجودة بعد ما تعملي رفع/استضافة
+// المنتجات والطلبات دلوقتي متخزنة على Firebase (Firestore) - يعني كل الأجهزة
+// بتشوف نفس البيانات لحظيًا. السلة نفسها بتفضل في كل جهاز لوحده (وده طبيعي ومنطقي).
 
-const NONA_PRODUCTS_KEY = "nona_products";
 const NONA_CART_KEY = "nona_cart";
-const NONA_ORDER_SEQ_KEY = "nona_order_seq";
-const NONA_ORDERS_KEY = "nona_orders";
 
 // رقم محفظة فودافون كاش لاستلام العربون، ونفس الرقم على واتساب لتأكيد الطلب
 const STORE_PHONE_DISPLAY = "01154257411";
@@ -19,16 +17,16 @@ const CATEGORIES = [
 ];
 
 const DEFAULT_PRODUCTS = [
-  { id: 1, name: "خاتم لؤلؤة القمر", price: 350, category: "rings", desc: "فضة مطلية بالذهب مع لؤلؤة صناعية", image: null },
-  { id: 2, name: "خاتم عقدة الحب", price: 280, category: "rings", desc: "تصميم متشابك بسيط وأنيق", image: null },
-  { id: 3, name: "سوار همسة ذهبية", price: 420, category: "bracelets", desc: "سلسلة رفيعة قابلة للتعديل", image: null },
-  { id: 4, name: "سوار تعدد الطبقات", price: 380, category: "bracelets", desc: "ثلاث طبقات متداخلة", image: null },
-  { id: 5, name: "عقد قطرة الفجر", price: 550, category: "necklaces", desc: "حجر كريستالي معلّق", image: null },
-  { id: 6, name: "عقد الاسم الذهبي", price: 600, category: "necklaces", desc: "يُصنع حسب الاسم المطلوب", image: null },
-  { id: 7, name: "أقراط تعليقة اللؤلؤ", price: 300, category: "earrings", desc: "لؤلؤة واحدة معلقة", image: null },
-  { id: 8, name: "أقراط الهوائية الذهبية", price: 260, category: "earrings", desc: "حلقات دائرية كلاسيكية", image: null },
-  { id: 9, name: "طوق شعر أميرة", price: 220, category: "hair", desc: "قماش مخملي فاخر", image: null },
-  { id: 10, name: "مشبك شعر أوراق الذهب", price: 180, category: "hair", desc: "تصميم ورقة نباتية", image: null },
+  { name: "خاتم لؤلؤة القمر", price: 350, category: "rings", desc: "فضة مطلية بالذهب مع لؤلؤة صناعية", image: null },
+  { name: "خاتم عقدة الحب", price: 280, category: "rings", desc: "تصميم متشابك بسيط وأنيق", image: null },
+  { name: "سوار همسة ذهبية", price: 420, category: "bracelets", desc: "سلسلة رفيعة قابلة للتعديل", image: null },
+  { name: "سوار تعدد الطبقات", price: 380, category: "bracelets", desc: "ثلاث طبقات متداخلة", image: null },
+  { name: "عقد قطرة الفجر", price: 550, category: "necklaces", desc: "حجر كريستالي معلّق", image: null },
+  { name: "عقد الاسم الذهبي", price: 600, category: "necklaces", desc: "يُصنع حسب الاسم المطلوب", image: null },
+  { name: "أقراط تعليقة اللؤلؤ", price: 300, category: "earrings", desc: "لؤلؤة واحدة معلقة", image: null },
+  { name: "أقراط الهوائية الذهبية", price: 260, category: "earrings", desc: "حلقات دائرية كلاسيكية", image: null },
+  { name: "طوق شعر أميرة", price: 220, category: "hair", desc: "قماش مخملي فاخر", image: null },
+  { name: "مشبك شعر أوراق الذهب", price: 180, category: "hair", desc: "تصميم ورقة نباتية", image: null },
 ];
 
 // أيقونات SVG بسيطة لكل فئة (تُستخدم لو المنتج من غير صورة)
@@ -44,23 +42,66 @@ function catInfo(id) {
   return CATEGORIES.find((c) => c.id === id) || CATEGORIES[0];
 }
 
-function loadProducts() {
-  try {
-    const raw = localStorage.getItem(NONA_PRODUCTS_KEY);
-    if (!raw) {
-      localStorage.setItem(NONA_PRODUCTS_KEY, JSON.stringify(DEFAULT_PRODUCTS));
-      return [...DEFAULT_PRODUCTS];
-    }
-    return JSON.parse(raw);
-  } catch (e) {
-    return [...DEFAULT_PRODUCTS];
+// ---- Firestore refs ----
+const productsCol = db.collection("products");
+const ordersCol = db.collection("orders");
+const countersDoc = db.collection("meta").doc("counters");
+
+let seeded = false;
+async function ensureSeedProducts() {
+  if (seeded) return;
+  seeded = true;
+  const snap = await productsCol.limit(1).get();
+  if (snap.empty) {
+    const batch = db.batch();
+    DEFAULT_PRODUCTS.forEach((p) => {
+      const ref = productsCol.doc();
+      batch.set(ref, { ...p, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    });
+    await batch.commit();
   }
 }
 
-function saveProducts(products) {
-  localStorage.setItem(NONA_PRODUCTS_KEY, JSON.stringify(products));
+// callback(products) بيتنادى فورًا وبعدين تاني كل مرة تتغير فيها البيانات على أي جهاز
+function subscribeProducts(callback) {
+  ensureSeedProducts();
+  return productsCol.orderBy("createdAt", "asc").onSnapshot((snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
 }
 
+async function addProduct(product) {
+  await productsCol.add({ ...product, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+}
+
+async function updateProduct(id, product) {
+  await productsCol.doc(id).update(product);
+}
+
+async function deleteProductDoc(id) {
+  await productsCol.doc(id).delete();
+}
+
+async function nextOrderNumber() {
+  return db.runTransaction(async (t) => {
+    const doc = await t.get(countersDoc);
+    const current = doc.exists && doc.data().nextOrderNumber ? doc.data().nextOrderNumber : 1001;
+    t.set(countersDoc, { nextOrderNumber: current + 1 }, { merge: true });
+    return current;
+  });
+}
+
+async function addOrder(order) {
+  await ordersCol.add({ ...order, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+}
+
+function subscribeOrders(callback) {
+  return ordersCol.orderBy("createdAt", "desc").onSnapshot((snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
+}
+
+// ---- السلة: بتفضل محلية على كل جهاز، وده طبيعي (سلة كل عميل خاصة بيه) ----
 function loadCart() {
   try {
     const raw = localStorage.getItem(NONA_CART_KEY);
@@ -72,30 +113,4 @@ function loadCart() {
 
 function saveCart(cart) {
   localStorage.setItem(NONA_CART_KEY, JSON.stringify(cart));
-}
-
-function nextOrderNumber() {
-  const current = parseInt(localStorage.getItem(NONA_ORDER_SEQ_KEY) || "1000", 10);
-  const next = current + 1;
-  localStorage.setItem(NONA_ORDER_SEQ_KEY, String(next));
-  return next;
-}
-
-function loadOrders() {
-  try {
-    const raw = localStorage.getItem(NONA_ORDERS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
-  }
-}
-
-function saveOrders(orders) {
-  localStorage.setItem(NONA_ORDERS_KEY, JSON.stringify(orders));
-}
-
-function addOrder(order) {
-  const orders = loadOrders();
-  orders.unshift(order); // الأحدث فوق
-  saveOrders(orders);
 }
